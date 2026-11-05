@@ -1,0 +1,8 @@
+{
+  "name": "The Shelter Church Management",
+  "short_name": "The Shelter",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a"
+}
