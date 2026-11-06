@@ -6,11 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  getSavedChurchId,
-  getSavedWorkspace,
+  getSavedChurchId
   saveChurch,
-  saveWorkspace,
-  Workspace,
 } from "@/lib/workspace";
 
 type Profile = { full_name: string; role: string; church_id: string };
@@ -40,7 +37,6 @@ function AppShellContent({
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [churches, setChurches] = useState<Church[]>([]);
-  const [workspace, setWorkspace] = useState<Workspace>("junior");
   const [selectedChurch, setSelectedChurch] = useState("");
 
   const isPublicRoute = PUBLIC_ROUTES.has(pathname);
@@ -96,10 +92,7 @@ function AppShellContent({
       setProfile(typedProfile);
       setChurches(allChurches);
 
-      const savedWorkspace = getSavedWorkspace();
       const savedChurch = getSavedChurchId();
-
-      setWorkspace(savedWorkspace);
 
       const allowed =
         typedProfile.role === "super_admin"
@@ -135,31 +128,18 @@ function AppShellContent({
     churches.find((church) => church.id === selectedChurch)?.name ??
     "Loading location...";
 
-  function setWs(value: Workspace) {
-    setWorkspace(value);
-    saveWorkspace(value);
-    router.push(value === "main" ? "/main-church" : "/dashboard");
-  }
-
   function setChurchId(id: string) {
     setSelectedChurch(id);
     saveChurch(id);
     window.location.reload();
   }
 
-  const nav =
-    workspace === "junior"
-      ? [
-          ["Dashboard", "/dashboard"],
+  const nav = [          ["Dashboard", "/dashboard"],
           ["Children", "/children"],
           ["Classes", "/classes"],
           ["Attendance", "/attendance"],
           ["Birthdays", "/birthdays"],
           ["Import", "/import"],
-        ]
-      : [
-          ["Main Dashboard", "/main-church"],
-          ["Members", "/main-church/members"],
         ];
 
   return (
@@ -168,9 +148,7 @@ function AppShellContent({
         <div className="flex items-center gap-3 border-b p-4">
           <Image
             src={
-              workspace === "junior"
-                ? "/junior-church-logo.jpg"
-                : "/main-church-logo.jpg"
+              "/junior-church-logo.jpg"
             }
             alt="Church logo"
             width={52}
@@ -182,40 +160,12 @@ function AppShellContent({
               The Shelter
             </p>
             <h1 className="font-bold">
-              {workspace === "junior" ? "Junior Church" : "Main Church"}
+              Junior Church
             </h1>
           </div>
         </div>
 
         <div className="space-y-3 p-4">
-          <div>
-            <label className="text-xs font-semibold text-slate-500">
-              WORKSPACE
-            </label>
-            <div className="mt-1 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
-              <button
-                onClick={() => setWs("junior")}
-                className={`rounded-md px-2 py-2 text-sm ${
-                  workspace === "junior"
-                    ? "bg-white font-semibold shadow"
-                    : ""
-                }`}
-              >
-                Junior
-              </button>
-              <button
-                onClick={() => setWs("main")}
-                className={`rounded-md px-2 py-2 text-sm ${
-                  workspace === "main"
-                    ? "bg-white font-semibold shadow"
-                    : ""
-                }`}
-              >
-                Main
-              </button>
-            </div>
-          </div>
-
           <div>
             <label className="text-xs font-semibold text-slate-500">
               LOCATION
@@ -321,7 +271,7 @@ function AppShellContent({
       <div className="min-w-0 flex-1">
         <div className="border-b bg-white px-6 py-3 text-sm text-slate-600">
           <span className="font-semibold">
-            {workspace === "junior" ? "Junior Church" : "Main Church"}
+            Junior Church
           </span>
           <span className="mx-2">/</span>
           {churchName}
