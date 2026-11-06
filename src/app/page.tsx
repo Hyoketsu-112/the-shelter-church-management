@@ -19,7 +19,7 @@ export default function WelcomePage() {
     <main className="min-h-screen overflow-hidden bg-[#fbfaf8] text-[#202b26]">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/main-church-logo.jpg" alt="The Shelter Church" width={52} height={52} className="h-12 w-12 rounded-full object-contain" priority />
+          <Image src="/junior-church-logo.jpg" alt="The Shelter Junior Church" width={52} height={52} className="h-12 w-12 rounded-full object-contain" priority />
           <div className="leading-tight">
             <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#718078]">The Shelter</p>
             <p className="text-sm font-black">Church Management</p>
@@ -56,15 +56,18 @@ export default function WelcomePage() {
       </section>
 
       <section id="workspaces" className="bg-[#202c27] px-5 py-20 text-white sm:px-8 lg:py-24">
-        <div className="mx-auto max-w-7xl lg:px-4"><p className="text-xs font-bold uppercase tracking-[.22em] text-[#d6a083]">Two dedicated workspaces</p><h2 className="mt-4 max-w-3xl text-3xl font-black tracking-tight sm:text-5xl">One church family. The right space for every ministry.</h2>
-          <div className="mt-12 grid gap-5 lg:grid-cols-2">
-            <article className="rounded-[1.7rem] bg-[#f7f4ee] p-7 text-[#26332b] sm:p-9"><div className="flex items-center justify-between"><Image src="/junior-church-logo.jpg" alt="The Shelter Junior Church" width={70} height={70} className="h-16 w-16 rounded-2xl bg-white object-contain p-1" /><span className="rounded-full bg-[#e7eee6] px-3 py-1.5 text-[10px] font-bold uppercase text-[#58725e]">Junior Church</span></div><h3 className="mt-8 text-2xl font-black">Every child known. Every family cared for.</h3><p className="mt-3 text-sm leading-7 text-[#707970]">Manage child profiles, guardian details, classes, birthdays and ministry follow-up from one practical workspace.</p></article>
-            <article className="rounded-[1.7rem] bg-[#eef3ee] p-7 text-[#26332b] sm:p-9"><div className="flex items-center justify-between"><Image src="/main-church-logo.jpg" alt="The Shelter Church" width={70} height={70} className="h-16 w-16 rounded-2xl bg-white object-contain p-1" /><span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-bold uppercase text-[#58725e]">Main Church</span></div><h3 className="mt-8 text-2xl font-black">A clearer view of the wider church.</h3><p className="mt-3 text-sm leading-7 text-[#707970]">A dedicated environment for church-wide people, ministry and location-aware operations.</p></article>
+        <div className="mx-auto max-w-7xl lg:px-4"><p className="text-xs font-bold uppercase tracking-[.22em] text-[#d6a083]">One dedicated workspace</p><h2 className="mt-4 max-w-3xl text-3xl font-black tracking-tight sm:text-5xl">One focused workspace for every child and family.</h2>
+          <div className="mt-12 max-w-3xl">
+            <article className="rounded-[1.7rem] bg-[#f7f4ee] p-7 text-[#26332b] sm:p-9">
+              <div className="flex items-center justify-between"><Image src="/junior-church-logo.jpg" alt="The Shelter Junior Church" width={70} height={70} className="h-16 w-16 rounded-2xl bg-white object-contain p-1" /><span className="rounded-full bg-[#e7eee6] px-3 py-1.5 text-[10px] font-bold uppercase text-[#58725e]">Junior Church</span></div>
+              <h3 className="mt-8 text-2xl font-black">Every child known. Every family cared for.</h3>
+              <p className="mt-3 text-sm leading-7 text-[#707970]">Manage child profiles, guardian details, classes, birthdays, attendance and ministry follow-up from one secure workspace.</p>
+            </article>
           </div>
         </div>
       </section>
 
-      <section id="locations" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-12"><p className="text-xs font-bold uppercase tracking-[.22em] text-[#b65d35]">Connected locations</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Supporting every church location with consistency.</h2><div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{locations.map((location, index) => <div key={location} className="rounded-2xl border border-[#e8e4dd] bg-white p-5 transition hover:-translate-y-1 hover:shadow-xl"><div className="flex justify-between"><span className="text-xs font-black text-[#b65d35]">0{index + 1}</span><MapPin size={16} className="text-[#9ba39c]" /></div><h3 className="mt-8 text-lg font-extrabold">{location}</h3><p className="mt-2 text-xs text-[#7d877f]">Junior and Main Church workspaces</p></div>)}</div></section>
+      <section id="locations" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-12"><p className="text-xs font-bold uppercase tracking-[.22em] text-[#b65d35]">Connected locations</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Supporting every church location with consistency.</h2><div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{locations.map((location, index) => <div key={location} className="rounded-2xl border border-[#e8e4dd] bg-white p-5 transition hover:-translate-y-1 hover:shadow-xl"><div className="flex justify-between"><span className="text-xs font-black text-[#b65d35]">0{index + 1}</span><MapPin size={16} className="text-[#9ba39c]" /></div><h3 className="mt-8 text-lg font-extrabold">{location}</h3><p className="mt-2 text-xs text-[#7d877f]">Junior Church management</p></div>)}</div></section>
 
       <section id="features" className="bg-[#f1eee7] px-5 py-20 sm:px-8"><div className="mx-auto max-w-7xl"><div className="mx-auto max-w-2xl text-center"><p className="text-xs font-bold uppercase tracking-[.22em] text-[#b65d35]">Thoughtful tools</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Less time chasing information. More time caring for people.</h2></div><div className="mt-12 grid gap-4 md:grid-cols-3">{features.map(([Icon, title, body]) => <article key={title} className="rounded-2xl bg-white p-6 shadow-sm"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f5e9e1] text-[#aa5934]"><Icon size={20} /></div><h3 className="mt-5 font-extrabold">{title}</h3><p className="mt-2 text-sm leading-6 text-[#748078]">{body}</p></article>)}</div></div></section>
 
