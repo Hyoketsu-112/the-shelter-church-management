@@ -75,6 +75,7 @@ export default function Register() {
       email: form.email.trim(),
       password: form.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           full_name: form.full_name.trim(),
           phone: form.phone.trim(),
