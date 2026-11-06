@@ -13,7 +13,7 @@ type Profile = {
   phone: string | null;
   role: string;
   is_active: boolean;
-  churches: Church[] | null;
+  churches: Church | null;
 };
 
 export default function Users() {
@@ -65,7 +65,7 @@ export default function Users() {
             phone,
             role,
             is_active,
-            churches (
+            churches!profiles_church_id_fkey (
               name
             )
           `)
@@ -97,7 +97,7 @@ export default function Users() {
       return "All locations";
     }
 
-    return profile.churches?.[0]?.name ?? "No location assigned";
+    return profile.churches?.name ?? "No location assigned";
   }
 
   return (
