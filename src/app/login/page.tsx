@@ -70,6 +70,7 @@ function LoginContent() {
         email: email.trim(),
         options: {
           shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
