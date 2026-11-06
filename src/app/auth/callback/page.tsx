@@ -17,7 +17,7 @@ function AuthCallbackContent() {
       if (errorDescription) {
         if (!cancelled) {
           setMessage("This sign-in link is invalid or has expired. Please request a new one.");
-          setTimeout(() => router.replace("/"), 2500);
+          setTimeout(() => router.replace("/login"), 2500);
         }
         return;
       }
@@ -30,7 +30,7 @@ function AuthCallbackContent() {
         if (error) {
           if (!cancelled) {
             setMessage(`Unable to complete sign-in: ${error.message}`);
-            setTimeout(() => router.replace("/"), 3000);
+            setTimeout(() => router.replace("/login"), 3000);
           }
           return;
         }
@@ -43,7 +43,7 @@ function AuthCallbackContent() {
       if (!session) {
         if (!cancelled) {
           setMessage("No active session was created. Please request a new sign-in link.");
-          setTimeout(() => router.replace("/"), 2500);
+          setTimeout(() => router.replace("/login"), 2500);
         }
         return;
       }
