@@ -2,8 +2,40 @@
 import {ChangeEvent,useState} from "react";import * as XLSX from "xlsx";import {supabase} from "@/lib/supabase";import {getSavedChurchId,getSavedWorkspace} from "@/lib/workspace";
 type Row=Record<string,unknown>;
 const text=(v:unknown)=>String(v??"").trim();
+
+// PostgreSQL date columns require a plain YYYY-MM-DD value. XLSX with
+// cellDates:true can return JavaScript Date objects, which must never be
+// sent to the database via String(date).
+function normalizeDate(value: unknown): string {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const raw = text(value);
+  if (!raw) return "";
+
+  // Already in the database-friendly format.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+
+  // Handle common DD/MM/YYYY and DD-MM-YYYY spreadsheet formats.
+  const match = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if (match) {
+    const [, day, month, year] = match;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 export default function ImportPage(){const [rows,setRows]=useState<Row[]>([]);const [fileName,setFileName]=useState("");const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);
-function normalize(raw:Row){const pick=(...keys:string[])=>{for(const k of keys){const found=Object.keys(raw).find(x=>x.toLowerCase().replace(/[^a-z]/g,'')===k.toLowerCase().replace(/[^a-z]/g,''));if(found)return text(raw[found])}return ''};return {first_name:pick('first_name','firstname','first name'),last_name:pick('last_name','lastname','last name'),date_of_birth:pick('date_of_birth','dob','date of birth'),gender:pick('gender'),phone:pick('phone'),email:pick('email')};}
+function normalize(raw:Row){const pick=(...keys:string[])=>{for(const k of keys){const found=Object.keys(raw).find(x=>x.toLowerCase().replace(/[^a-z]/g,'')===k.toLowerCase().replace(/[^a-z]/g,''));if(found)return text(raw[found])}return ''};return {first_name:pick('first_name','firstname','first name'),last_name:pick('last_name','lastname','last name'),date_of_birth:normalizeDate((()=>{for(const k of ['date_of_birth','dob','date of birth']){const found=Object.keys(raw).find(x=>x.toLowerCase().replace(/[^a-z]/g,'')===k.toLowerCase().replace(/[^a-z]/g,''));if(found)return raw[found]}return ''})()),gender:pick('gender'),phone:pick('phone'),email:pick('email')};}
 function read(e:ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setFileName(file.name);const reader=new FileReader();reader.onload=ev=>{try{const wb=XLSX.read(ev.target?.result,{type:'array',cellDates:true});const sheet=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json<Row>(sheet,{defval:''}).map(normalize);setRows(data);setMessage(`${data.length} rows ready for review.`)}catch{setMessage('Could not read this file. Use a valid CSV or XLSX spreadsheet.')}};reader.readAsArrayBuffer(file)}
 const invalid=rows.filter(r=>!text(r.first_name)||!text(r.last_name)||!text(r.date_of_birth));
 async function importRows(){const church=getSavedChurchId(),workspace=getSavedWorkspace();if(!church)return setMessage('Choose a location first.');if(workspace==='main'){setMessage('Main Church member import is not mapped in this importer yet. Switch to Junior Church or use the Members page.');return;}if(invalid.length){setMessage(`Fix ${invalid.length} invalid row(s) before importing.`);return;}setBusy(true);const payload=rows.map(r=>({church_id:church,first_name:text(r.first_name),last_name:text(r.last_name),date_of_birth:text(r.date_of_birth),gender:text(r.gender)||null,status:'active'}));const {error}=await supabase.from('children').insert(payload);if(!error){const {data:{user}}=await supabase.auth.getUser();await supabase.from('import_log').insert({church_id:church,workspace,imported_by:user?.id??null,filename:fileName,total_rows:rows.length,imported_rows:rows.length,failed_rows:0});setRows([])}setBusy(false);setMessage(error?error.message:`Imported ${payload.length} children successfully.`)}
