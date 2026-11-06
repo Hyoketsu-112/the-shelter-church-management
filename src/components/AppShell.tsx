@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { getSavedChurchId, saveChurch } from "@/lib/workspace";
 
 type Profile = { full_name: string; role: string; church_id: string };
