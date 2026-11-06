@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabase";
 type ClassItem = {
   id: string;
   name: string;
+  min_age?: number | null;
+  max_age?: number | null;
 };
 
 type Guardian = {
@@ -71,7 +73,7 @@ function ChildPageContent() {
       const [classesResult, guardianLinksResult] = await Promise.all([
         supabase
           .from("classes")
-          .select("id, name")
+          .select("id, name, min_age, max_age")
           .eq("church_id", childData.church_id)
           .order("name"),
         supabase
@@ -83,6 +85,9 @@ function ChildPageContent() {
       ]);
 
       setChild(childData);
+      if (classesResult.error) {
+        setMessage(`Could not load classes: ${classesResult.error.message}`);
+      }
       setClasses(classesResult.data ?? []);
 
       const guardianItems: Guardian[] = (guardianLinksResult.data ?? [])
@@ -294,7 +299,7 @@ function ChildPageContent() {
                 <option value="">No class assigned</option>
                 {classes.map((item) => (
                   <option key={item.id} value={item.id}>
-                    {item.name}
+                    {item.name}{item.min_age != null || item.max_age != null ? ` (Ages ${item.min_age ?? "?"}–${item.max_age ?? "?"})` : ""}
                   </option>
                 ))}
               </select>

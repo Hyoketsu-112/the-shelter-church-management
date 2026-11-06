@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { resolveActiveChurchId } from "@/lib/active-church";
 
 type ClassItem = { id: string; name: string };
 
@@ -22,17 +23,17 @@ export default function NewChildPage() {
 
   useEffect(() => {
     async function loadClasses() {
-      const { data } = await supabase
-        .from("classes")
-        .select("id, name")
-        .order("name");
-
-      setClasses(data ?? []);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase.from("profiles").select("church_id").eq("id", user.id).single();
+      const churchId = resolveActiveChurchId(profile?.church_id);
+      if (!churchId) { setMessage("Choose a location before adding a child."); return; }
+      const { data, error } = await supabase.from("classes").select("id, name").eq("church_id", churchId).order("name");
+      if (error) setMessage(`Could not load classes: ${error.message}`);
+      else setClasses(data ?? []);
     }
-
     loadClasses();
   }, []);
-
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -63,8 +64,11 @@ export default function NewChildPage() {
       return;
     }
 
+    const activeChurchId = resolveActiveChurchId(profile.church_id);
+    if (!activeChurchId) { setMessage("Choose a location before saving."); setLoading(false); return; }
+
     const { error } = await supabase.from("children").insert({
-      church_id: profile.church_id,
+      church_id: activeChurchId,
       first_name: firstName.trim(),
       last_name: lastName.trim(),
       date_of_birth: dateOfBirth,

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { resolveActiveChurchId } from "@/lib/active-church";
 
 type ClassItem = {
   id: string;
@@ -31,10 +32,11 @@ export default function ClassesPage() {
   const canManage =
     profile?.role === "super_admin" || profile?.role === "dept_head";
 
-  async function loadClasses() {
+  async function loadClasses(churchId: string) {
     const { data, error } = await supabase
       .from("classes")
       .select("id, name, min_age, max_age")
+      .eq("church_id", churchId)
       .order("name");
 
     if (error) {
@@ -69,7 +71,9 @@ export default function ClassesPage() {
       }
 
       setProfile(profileData);
-      await loadClasses();
+      const activeChurchId = resolveActiveChurchId(profileData.church_id);
+      if (!activeChurchId) { setMessage("Choose a location before managing classes."); setLoading(false); return; }
+      await loadClasses(activeChurchId);
       setLoading(false);
     }
 
@@ -84,11 +88,18 @@ export default function ClassesPage() {
       return;
     }
 
+    const min = minAge === "" ? null : Number(minAge);
+    const max = maxAge === "" ? null : Number(maxAge);
+    if ((min !== null && (!Number.isInteger(min) || min < 0)) || (max !== null && (!Number.isInteger(max) || max < 0)) || (min !== null && max !== null && min > max)) {
+      setMessage("Enter valid ages. Minimum age cannot be greater than maximum age.");
+      return;
+    }
+
     setSaving(true);
     setMessage("");
 
     const { error } = await supabase.from("classes").insert({
-      church_id: profile.church_id,
+      church_id: resolveActiveChurchId(profile.church_id),
       name: name.trim(),
       min_age: minAge ? Number(minAge) : null,
       max_age: maxAge ? Number(maxAge) : null,
@@ -103,7 +114,8 @@ export default function ClassesPage() {
     setName("");
     setMinAge("");
     setMaxAge("");
-    await loadClasses();
+    const activeChurchId = resolveActiveChurchId(profile.church_id);
+    if (activeChurchId) await loadClasses(activeChurchId);
     setSaving(false);
   }
 
@@ -123,7 +135,7 @@ export default function ClassesPage() {
       return;
     }
 
-    await loadClasses();
+    if (profile) { const activeChurchId = resolveActiveChurchId(profile.church_id); if (activeChurchId) await loadClasses(activeChurchId); }
   }
 
   if (loading) {

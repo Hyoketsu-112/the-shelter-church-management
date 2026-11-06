@@ -7,6 +7,11 @@ const text=(v:unknown)=>String(v??"").trim();
 // cellDates:true can return JavaScript Date objects, which must never be
 // sent to the database via String(date).
 function normalizeDate(value: unknown): string {
+  // Excel can expose dates as serial numbers depending on the workbook.
+  if (typeof value === "number" && Number.isFinite(value) && value > 20000 && value < 60000) {
+    const parsed = XLSX.SSF.parse_date_code(value);
+    if (parsed) return `${parsed.y}-${String(parsed.m).padStart(2, "0")}-${String(parsed.d).padStart(2, "0")}`;
+  }
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     const year = value.getFullYear();
     const month = String(value.getMonth() + 1).padStart(2, "0");
