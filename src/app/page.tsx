@@ -22,7 +22,7 @@ export default function WelcomePage() {
           <Image src="/junior-church-logo.jpg" alt="The Shelter Junior Church" width={52} height={52} className="h-12 w-12 rounded-full object-contain" priority />
           <div className="leading-tight">
             <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#718078]">The Shelter</p>
-            <p className="text-sm font-black">Church Management</p>
+            <p className="text-sm font-black">Junior Church Management</p>
           </div>
         </Link>
         <nav className="hidden gap-7 text-sm font-semibold text-[#647069] md:flex">
@@ -37,7 +37,7 @@ export default function WelcomePage() {
         <div className="relative z-10">
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#e8dfd6] bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[.16em] text-[#a15837]"><span className="h-2 w-2 rounded-full bg-[#b65d35]" /> One connected church network</div>
           <h1 className="max-w-3xl text-5xl font-black leading-[1.03] tracking-[-.055em] sm:text-6xl lg:text-7xl">Care for people.<br /><span className="text-[#b65d35]">Clarity for every</span><br />church community.</h1>
-          <p className="mt-7 max-w-xl text-base leading-8 text-[#68736c] sm:text-lg">A shared digital home for The Shelter network—bringing Junior Church records, ministry teams and church operations into a more organised and thoughtful experience.</p>
+          <p className="mt-7 max-w-xl text-base leading-8 text-[#68736c] sm:text-lg">A shared digital home for The Shelter Junior Church—bringing child records, families, classes and ministry teams into one organised and thoughtful experience.</p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link href="/login" className="inline-flex items-center justify-center gap-3 rounded-full bg-[#202c27] px-7 py-4 text-sm font-bold text-white transition hover:bg-[#35483e]">Access the platform <ArrowRight size={17} /></Link>
             <a href="#workspaces" className="inline-flex items-center justify-center rounded-full border border-[#dedbd4] bg-white px-7 py-4 text-sm font-bold">Explore workspaces</a>
@@ -49,7 +49,7 @@ export default function WelcomePage() {
           <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-[#e7eee7] via-[#f7eee6] to-[#e8e2d8] blur-sm" />
           <div className="relative rounded-[2rem] border border-white bg-white p-6 shadow-[0_35px_90px_-45px_rgba(30,45,37,.45)]">
             <div className="flex items-center justify-between border-b border-[#eeece7] pb-5"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#8b958d]">Network overview</p><h2 className="mt-1 text-xl font-black">Church locations</h2></div><span className="rounded-full bg-[#edf3ec] px-3 py-1.5 text-[10px] font-bold text-[#58725e]">3 locations</span></div>
-            <div className="grid gap-3 py-5 sm:grid-cols-2"><div className="rounded-2xl bg-[#f6f3ed] p-4"><Users className="text-[#b65d35]" size={22} /><p className="mt-5 text-2xl font-black">Junior</p><p className="mt-1 text-xs leading-5 text-[#748078]">Children, guardians, classes and birthdays</p></div><div className="rounded-2xl bg-[#eef3ee] p-4"><Church className="text-[#58725e]" size={22} /><p className="mt-5 text-2xl font-black">Main</p><p className="mt-1 text-xs leading-5 text-[#748078]">A dedicated space for the wider church</p></div></div>
+            <div className="grid gap-3 py-5 sm:grid-cols-2"><div className="rounded-2xl bg-[#f6f3ed] p-4"><Users className="text-[#b65d35]" size={22} /><p className="mt-5 text-2xl font-black">Junior</p><p className="mt-1 text-xs leading-5 text-[#748078]">Children, guardians, classes and birthdays</p></div><div className="rounded-2xl bg-[#eef3ee] p-4"><Church className="text-[#58725e]" size={22} /><p className="mt-5 text-2xl font-black">Junior</p><p className="mt-1 text-xs leading-5 text-[#748078]">Children, guardians, classes and follow-up</p></div></div>
             <div className="space-y-2 rounded-2xl border border-[#eeece7] p-4">{locations.map((location, index) => <div key={location} className="flex items-center gap-3 rounded-xl bg-[#faf9f6] px-3 py-3"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f3e6de] text-xs font-black text-[#a15837]">0{index + 1}</span><span className="flex-1 text-sm font-semibold">{location}</span><span className="h-2 w-2 rounded-full bg-[#7c9b81]" /></div>)}</div>
           </div>
         </div>
