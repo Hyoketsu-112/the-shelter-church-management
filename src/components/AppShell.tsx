@@ -2,13 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import {
-  getSavedChurchId
-  saveChurch,
-} from "@/lib/workspace";
+import { getSavedChurchId, saveChurch } from "@/lib/workspace";
 
 type Profile = { full_name: string; role: string; church_id: string };
 type Church = { id: string; name: string; location_key: string | null };
@@ -134,13 +128,14 @@ function AppShellContent({
     window.location.reload();
   }
 
-  const nav = [          ["Dashboard", "/dashboard"],
-          ["Children", "/children"],
-          ["Classes", "/classes"],
-          ["Attendance", "/attendance"],
-          ["Birthdays", "/birthdays"],
-          ["Import", "/import"],
-        ];
+  const nav = [
+    ["Dashboard", "/dashboard"],
+    ["Children", "/children"],
+    ["Classes", "/classes"],
+    ["Attendance", "/attendance"],
+    ["Birthdays", "/birthdays"],
+    ["Import", "/import"],
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 md:flex">
