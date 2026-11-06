@@ -3,23 +3,20 @@
 
 drop table if exists public.members cascade;
 
+delete from public.user_church_access where workspace <> 'junior';
 alter table public.user_church_access drop constraint if exists user_church_access_workspace_check;
 alter table public.user_church_access
   add constraint user_church_access_workspace_check check (workspace = 'junior');
 
-delete from public.user_church_access where workspace <> 'junior';
-
+delete from public.visitor_submissions where workspace <> 'junior';
 alter table public.visitor_submissions drop constraint if exists visitor_submissions_workspace_check;
 alter table public.visitor_submissions
   add constraint visitor_submissions_workspace_check check (workspace = 'junior');
 
-delete from public.visitor_submissions where workspace <> 'junior';
-
+delete from public.import_log where workspace <> 'junior';
 alter table public.import_log drop constraint if exists import_log_workspace_check;
 alter table public.import_log
   add constraint import_log_workspace_check check (workspace = 'junior');
-
-delete from public.import_log where workspace <> 'junior';
 
 create or replace function public.has_church_access(target uuid, target_workspace text default 'junior')
 returns boolean language sql stable security definer set search_path=public as $$
