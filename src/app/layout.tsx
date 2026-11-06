@@ -5,7 +5,7 @@ import AppShell from "@/components/AppShell";
 export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   title: "The Shelter Church Management",
-  description: "The Shelter Junior and Main Church Management System",
+  description: "The Shelter Junior Church Management System",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
