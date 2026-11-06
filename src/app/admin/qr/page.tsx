@@ -1,3 +1,29 @@
 "use client";
-import {useEffect,useState} from "react";import QRCode from "qrcode";import {supabase} from "@/lib/supabase";type C={id:string;name:string};
-export default function QRPage(){const [churches,setChurches]=useState<C[]>([]);const [church,setChurch]=useState('');const [workspace,setWorkspace]=useState('junior');const [image,setImage]=useState('');useEffect(()=>{supabase.from('churches').select('id,name').eq('is_active',true).order('name').then(({data})=>{setChurches(data??[]);setChurch(data?.[0]?.id??'')})},[]);useEffect(()=>{if(!church)return;const url=`${window.location.origin}/visit/${church}/${workspace}`;QRCode.toDataURL(url,{width:360,margin:2}).then(setImage)},[church,workspace]);const url=church?`${typeof window!=='undefined'?window.location.origin:''}/visit/${church}/${workspace}`:'';return <main className="p-5 md:p-8"><h1 className="text-2xl font-black">QR registration</h1><p className="mt-1 text-sm text-slate-500">Create a QR code for first-time visitor registration.</p><div className="mt-6 max-w-xl rounded-2xl border bg-white p-5"><select value={church} onChange={e=>setChurch(e.target.value)} className="w-full rounded-xl border p-3">{churches.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select><select value={workspace} onChange={e=>setWorkspace(e.target.value)} className="mt-3 w-full rounded-xl border p-3"><option value="junior">Junior Church</option><option value="main">Main Church</option></select>{image&&<><img src={image} alt="Registration QR code" className="mx-auto mt-6 w-72"/><a href={image} download={`shelter-${workspace}-qr.png`} className="mx-auto mt-3 block w-fit rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white">Download QR image</a><p className="mt-4 break-all text-xs text-slate-500">{url}</p></>}</div></main>}
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
+import { supabase } from "@/lib/supabase";
+
+type Church = { id: string; name: string };
+
+export default function QRPage() {
+  const [churches, setChurches] = useState<Church[]>([]);
+  const [church, setChurch] = useState("");
+  const [image, setImage] = useState("");
+
+  useEffect(() => {
+    supabase.from("churches").select("id,name").eq("is_active", true).order("name")
+      .then(({ data }) => { setChurches(data ?? []); setChurch(data?.[0]?.id ?? ""); });
+  }, []);
+
+  useEffect(() => {
+    if (!church) return;
+    const url = `${window.location.origin}/visit/${church}/junior`;
+    QRCode.toDataURL(url, { width: 360, margin: 2 }).then(setImage);
+  }, [church]);
+
+  const url = church && typeof window !== "undefined"
+    ? `${window.location.origin}/visit/${church}/junior`
+    : "";
+
+  return <main className="p-5 md:p-8"><h1 className="text-2xl font-black">Junior Church QR registration</h1><p className="mt-1 text-sm text-slate-500">Create a QR code for Junior Church first-time registration.</p><div className="mt-6 max-w-xl rounded-2xl border bg-white p-5"><select value={church} onChange={e => setChurch(e.target.value)} className="w-full rounded-xl border p-3">{churches.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>{image && <><img src={image} alt="Junior Church registration QR code" className="mx-auto mt-6 w-72"/><a href={image} download="shelter-junior-church-qr.png" className="mx-auto mt-3 block w-fit rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white">Download QR image</a><p className="mt-4 break-all text-xs text-slate-500">{url}</p></>}</div></main>;
+}
