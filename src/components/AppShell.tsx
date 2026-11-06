@@ -16,7 +16,7 @@ import {
 type Profile = { full_name: string; role: string; church_id: string };
 type Church = { id: string; name: string; location_key: string | null };
 
-const PUBLIC_ROUTES = new Set(["/", "/register", "/auth/callback"]);
+const PUBLIC_ROUTES = new Set(["/", "/login", "/register", "/auth/callback", "/welcome"]);
 
 export default function AppShell({
   children,
@@ -58,7 +58,7 @@ function AppShellContent({
       if (!active) return;
 
       if (!user) {
-        router.replace("/");
+        router.replace("/login");
         return;
       }
 
@@ -78,7 +78,7 @@ function AppShellContent({
       if (p.is_active === false) {
         await supabase.auth.signOut();
         if (active) {
-          router.replace("/?message=awaiting_approval");
+          router.replace("/login?message=awaiting_approval");
         }
         return;
       }
