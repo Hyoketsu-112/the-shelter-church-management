@@ -23,7 +23,7 @@ Implemented in this feature branch:
 - Staff notification after import
 
 Next:
-- Downloadable template directly from the Import page
+- [x] Downloadable Excel template directly from the Import page
 - Per-row error export
 - Class-name validation before confirmation
 
