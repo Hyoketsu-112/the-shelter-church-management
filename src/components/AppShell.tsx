@@ -138,6 +138,7 @@ function AppShellContent({
     ["Attendance", "/attendance"],
     ["Birthdays", "/birthdays"],
     ["Import", "/import"],
+    ["Notifications", "/notifications"],
   ];
 
   return (
