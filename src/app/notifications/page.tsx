@@ -17,6 +17,7 @@ export default function NotificationsPage() {
     setLoading(true);
     const {data}=await supabase.from("user_notifications")
       .select("id,type,title,message,href,is_read,created_at")
+      .eq("in_app_enabled",true)
       .order("created_at",{ascending:false}).limit(100);
     setItems((data ?? []) as Notification[]);
     setLoading(false);
@@ -28,7 +29,7 @@ export default function NotificationsPage() {
     setItems(items=>items.map(x=>x.id===id?{...x,is_read:true}:x));
   }
   async function markAllRead() {
-    await supabase.from("user_notifications").update({is_read:true,read_at:new Date().toISOString()}).eq("is_read",false);
+    await supabase.from("user_notifications").update({is_read:true,read_at:new Date().toISOString()}).eq("is_read",false).eq("in_app_enabled",true);
     setItems(items=>items.map(x=>({...x,is_read:true})));
   }
 
