@@ -21,8 +21,8 @@ export default function Attendance() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Next.js 16 does not allow new Date() during prerendering.
-  // Set today's date after the component has mounted in the browser.
+  // Set today's date after the component mounts to avoid
+  // Next.js prerendering issues with new Date().
   useEffect(() => {
     setDate(new Date().toISOString().slice(0, 10));
   }, []);
@@ -66,7 +66,7 @@ export default function Attendance() {
       const childItems = (children ?? []) as Child[];
       setItems(childItems);
 
-      // Load any attendance already recorded for the selected date.
+      // Load attendance already recorded for the selected date.
       const { data: attendance, error: attendanceError } = await supabase
         .from("attendance")
         .select("child_id, present")
@@ -77,14 +77,14 @@ export default function Attendance() {
         throw attendanceError;
       }
 
-      // Default every child to present for easier attendance taking.
+      // Mark children present by default.
       const attendanceMap: Record<string, boolean> = {};
 
       childItems.forEach((child) => {
         attendanceMap[child.id] = true;
       });
 
-      // Replace defaults with existing saved attendance.
+      // Existing saved attendance overrides the default.
       (attendance ?? []).forEach((record) => {
         attendanceMap[record.child_id] = record.present;
       });
@@ -99,7 +99,7 @@ export default function Attendance() {
     }
   }
 
-  // Load attendance only after the date has been set.
+  // Load attendance after the date has been set.
   useEffect(() => {
     if (!date) return;
 
@@ -136,17 +136,32 @@ export default function Attendance() {
     setMessage("");
 
     try {
+      // Get the authenticated user so every attendance record
+      // identifies who marked it.
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        throw userError;
+      }
+
+      if (!user) {
+        throw new Error("You must be signed in to save attendance.");
+      }
+
       const records = items.map((child) => ({
         church_id: church,
         child_id: child.id,
         session_date: date,
         present: present[child.id] ?? true,
+        marked_by: user.id,
       }));
 
       /*
        * Remove existing attendance for this church and date before
-       * inserting the updated records. This makes editing attendance
-       * for the same day straightforward.
+       * inserting the updated records.
        */
       const { error: deleteError } = await supabase
         .from("attendance")
@@ -158,6 +173,7 @@ export default function Attendance() {
         throw deleteError;
       }
 
+      // Save attendance records.
       const { error: insertError } = await supabase
         .from("attendance")
         .insert(records);
@@ -167,33 +183,40 @@ export default function Attendance() {
       }
 
       /*
-       * Evaluate attendance for children who may require ministry
-       * follow-up after repeated absences.
+       * Evaluate children who may require follow-up after
+       * repeated absences.
        */
-      const { data: followUpCount, error: followUpError } = await supabase.rpc(
-        "evaluate_attendance_follow_up",
-        {
+      const { data: followUpCount, error: followUpError } =
+        await supabase.rpc("evaluate_attendance_follow_up", {
           p_church_id: church,
-        }
-      );
+        });
 
       if (followUpError) {
         console.error("Follow-up evaluation error:", followUpError);
       }
 
-      const presentCount = records.filter((record) => record.present).length;
+      const presentCount = records.filter(
+        (record) => record.present
+      ).length;
+
       const absentCount = records.length - presentCount;
 
       let successMessage =
         `Attendance saved successfully. ` +
         `${presentCount} present, ${absentCount} absent.`;
 
-      if (typeof followUpCount === "number" && followUpCount > 0) {
+      if (
+        typeof followUpCount === "number" &&
+        followUpCount > 0
+      ) {
         successMessage +=
           ` ${followUpCount} new follow-up case(s) were created.`;
       }
 
       setMessage(successMessage);
+
+      // Reload to confirm the saved attendance state.
+      await load();
     } catch (error) {
       const err = error as Error;
       console.error("Attendance save error:", err);
@@ -237,6 +260,7 @@ export default function Attendance() {
         </div>
       </div>
 
+      {/* Attendance summary */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border bg-white p-5">
           <p className="text-sm text-slate-500">Total Children</p>
@@ -254,6 +278,7 @@ export default function Attendance() {
         </div>
       </div>
 
+      {/* Children attendance list */}
       <div className="mt-6 rounded-2xl border bg-white">
         <div className="border-b p-5">
           <h2 className="font-black">Children</h2>
@@ -286,7 +311,7 @@ export default function Attendance() {
                     </p>
 
                     <p className="text-sm text-slate-500">
-                     {child.classes?.[0]?.name || "No class assigned"}
+                      {child.classes?.[0]?.name || "No class assigned"}
                     </p>
                   </div>
 
@@ -319,7 +344,9 @@ export default function Attendance() {
         </button>
 
         {message && (
-          <p className="text-sm font-medium text-slate-600">{message}</p>
+          <p className="text-sm font-medium text-slate-600">
+            {message}
+          </p>
         )}
       </div>
     </main>
