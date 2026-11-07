@@ -136,6 +136,7 @@ function AppShellContent({
     ["Children", "/children"],
     ["Classes", "/classes"],
     ["Attendance", "/attendance"],
+    ["Follow-up", "/follow-ups"],
     ["Birthdays", "/birthdays"],
     ["Import", "/import"],
     ["Notifications", "/notifications"],
