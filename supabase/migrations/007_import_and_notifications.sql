@@ -180,3 +180,19 @@ begin
   return count_created;
 end;
 $$;
+
+create or replace function public.notify_new_visitor()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  perform public.create_staff_notification(
+    new.church_id,'visitor','New first-time visitor',
+    new.full_name || ' submitted a Junior Church first-time registration.',
+    '/visit','visitor',new.id
+  );
+  return new;
+end;
+$$;
+drop trigger if exists visitor_submission_notification on public.visitor_submissions;
+create trigger visitor_submission_notification
+after insert on public.visitor_submissions
+for each row execute function public.notify_new_visitor();
