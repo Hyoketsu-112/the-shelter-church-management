@@ -1,36 +1,327 @@
 "use client";
-import {useEffect,useState} from "react";
-import {supabase} from "@/lib/supabase";
-import {getSavedChurchId} from "@/lib/workspace";
 
-type Child={id:string;first_name:string;last_name:string;classes:{name:string}|null};
-export default function Attendance(){
- const [items,setItems]=useState<Child[]>([]),[date,setDate]=useState(new Date().toISOString().slice(0,10));
- const [present,setPresent]=useState<Record<string,boolean>>({}),[message,setMessage]=useState(""),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false);
- async function load(){
-  setLoading(true);const church=getSavedChurchId();if(!church){setLoading(false);return;}
-  const {data:children,error}=await supabase.from("children").select("id,first_name,last_name,classes(name)").eq("church_id",church).is("archived_at",null).eq("status","active").order("first_name");
-  if(error){setMessage(error.message);setLoading(false);return;}
-  const ids=(children??[]).map((x:any)=>x.id);
-  const {data:existing}=ids.length?await supabase.from("attendance").select("child_id,present").eq("session_date",date).in("child_id",ids):{data:[]};
-  const map=Object.fromEntries((children??[]).map((x:any)=>[x.id,true]));
-  (existing??[]).forEach((x:any)=>map[x.child_id]=x.present);
-  setItems((children??[]) as unknown as Child[]);setPresent(map);setLoading(false);
- }
- useEffect(()=>{load()},[date]);
- function markAll(value:boolean){setPresent(Object.fromEntries(items.map(x=>[x.id,value])));}
- async function save(){
-  const church=getSavedChurchId();if(!church)return setMessage("Choose a location first.");
-  setSaving(true);setMessage("");
-  const {data,error}=await supabase.rpc("save_attendance_session",{p_church_id:church,p_session_date:date,p_records:items.map(x=>({child_id:x.id,present:!!present[x.id]}))});
-  setSaving(false);if(error)return setMessage(error.message);
-  const r=data as {total:number;present:number;absent:number};setMessage(`Saved: ${r.present} present, ${r.absent} absent, ${r.total} total.`);
- }
- return <main className="p-5 md:p-8">
-  <div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-black">Attendance</h1><p className="mt-1 text-sm text-slate-500">Mark attendance, correct mistakes, and trigger follow-up for repeated absences.</p></div><input type="date" className="rounded-xl border p-2" value={date} onChange={e=>setDate(e.target.value)}/></div>
-  <div className="mt-5 flex flex-wrap gap-2"><button onClick={()=>markAll(true)} className="rounded-lg border px-4 py-2 text-sm font-bold">Mark all present</button><button onClick={()=>markAll(false)} className="rounded-lg border px-4 py-2 text-sm font-bold">Mark all absent</button><button onClick={load} className="rounded-lg border px-4 py-2 text-sm">Refresh</button></div>
-  {loading?<p className="mt-6">Loading...</p>:<><div className="mt-5 overflow-hidden rounded-2xl border bg-white">{items.length===0?<p className="p-6 text-sm text-slate-500">No active children found.</p>:items.map(c=><label key={c.id} className="flex items-center justify-between gap-4 border-b p-4 last:border-0"><div><p className="font-semibold">{c.first_name} {c.last_name}</p><p className="text-xs text-slate-500">{c.classes?.name??"No class assigned"}</p></div><div className="flex items-center gap-2"><span className={"text-sm font-bold "+(present[c.id]?"text-green-700":"text-slate-500")}>{present[c.id]?"Present":"Absent"}</span><input aria-label={`Attendance for ${c.first_name} ${c.last_name}`} type="checkbox" checked={!!present[c.id]} onChange={e=>setPresent({...present,[c.id]:e.target.checked})} className="h-5 w-5"/></div></label>)}</div>
-  <button disabled={saving||!items.length} onClick={save} className="mt-5 rounded-xl bg-slate-900 px-5 py-3 font-bold text-white disabled:opacity-50">{saving?"Saving...":"Save attendance"}</button></>}
-  {message&&<p className="mt-4 rounded-xl bg-slate-100 p-3 text-sm">{message}</p>}
- </main>;
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { getSavedChurchId } from "@/lib/workspace";
+
+type Child = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  classes: {
+    name: string;
+  }[];
+};
+
+export default function Attendance() {
+  const [items, setItems] = useState<Child[]>([]);
+  const [date, setDate] = useState("");
+  const [present, setPresent] = useState<Record<string, boolean>>({});
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Next.js 16 does not allow new Date() during prerendering.
+  // Set today's date after the component has mounted in the browser.
+  useEffect(() => {
+    setDate(new Date().toISOString().slice(0, 10));
+  }, []);
+
+  async function load() {
+    if (!date) return;
+
+    setLoading(true);
+    setMessage("");
+
+    const church = getSavedChurchId();
+
+    if (!church) {
+      setItems([]);
+      setPresent({});
+      setLoading(false);
+      setMessage("Please select a church location before taking attendance.");
+      return;
+    }
+
+    try {
+      // Load active children for the selected church.
+      const { data: children, error: childrenError } = await supabase
+        .from("children")
+        .select(`
+          id,
+          first_name,
+          last_name,
+          classes (
+            name
+          )
+        `)
+        .eq("church_id", church)
+        .eq("status", "active")
+        .order("first_name");
+
+      if (childrenError) {
+        throw childrenError;
+      }
+
+      const childItems = (children ?? []) as Child[];
+      setItems(childItems);
+
+      // Load any attendance already recorded for the selected date.
+      const { data: attendance, error: attendanceError } = await supabase
+        .from("attendance")
+        .select("child_id, present")
+        .eq("church_id", church)
+        .eq("session_date", date);
+
+      if (attendanceError) {
+        throw attendanceError;
+      }
+
+      // Default every child to present for easier attendance taking.
+      const attendanceMap: Record<string, boolean> = {};
+
+      childItems.forEach((child) => {
+        attendanceMap[child.id] = true;
+      });
+
+      // Replace defaults with existing saved attendance.
+      (attendance ?? []).forEach((record) => {
+        attendanceMap[record.child_id] = record.present;
+      });
+
+      setPresent(attendanceMap);
+    } catch (error) {
+      const err = error as Error;
+      console.error("Attendance load error:", err);
+      setMessage(err.message || "Could not load attendance data.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Load attendance only after the date has been set.
+  useEffect(() => {
+    if (!date) return;
+
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date]);
+
+  function toggleAttendance(childId: string) {
+    setPresent((current) => ({
+      ...current,
+      [childId]: !current[childId],
+    }));
+  }
+
+  async function saveAttendance() {
+    const church = getSavedChurchId();
+
+    if (!church) {
+      setMessage("Please select a church location before saving attendance.");
+      return;
+    }
+
+    if (!date) {
+      setMessage("Please select an attendance date.");
+      return;
+    }
+
+    if (items.length === 0) {
+      setMessage("There are no active children available for attendance.");
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+
+    try {
+      const records = items.map((child) => ({
+        church_id: church,
+        child_id: child.id,
+        session_date: date,
+        present: present[child.id] ?? true,
+      }));
+
+      /*
+       * Remove existing attendance for this church and date before
+       * inserting the updated records. This makes editing attendance
+       * for the same day straightforward.
+       */
+      const { error: deleteError } = await supabase
+        .from("attendance")
+        .delete()
+        .eq("church_id", church)
+        .eq("session_date", date);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      const { error: insertError } = await supabase
+        .from("attendance")
+        .insert(records);
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      /*
+       * Evaluate attendance for children who may require ministry
+       * follow-up after repeated absences.
+       */
+      const { data: followUpCount, error: followUpError } = await supabase.rpc(
+        "evaluate_attendance_follow_up",
+        {
+          p_church_id: church,
+        }
+      );
+
+      if (followUpError) {
+        console.error("Follow-up evaluation error:", followUpError);
+      }
+
+      const presentCount = records.filter((record) => record.present).length;
+      const absentCount = records.length - presentCount;
+
+      let successMessage =
+        `Attendance saved successfully. ` +
+        `${presentCount} present, ${absentCount} absent.`;
+
+      if (typeof followUpCount === "number" && followUpCount > 0) {
+        successMessage +=
+          ` ${followUpCount} new follow-up case(s) were created.`;
+      }
+
+      setMessage(successMessage);
+    } catch (error) {
+      const err = error as Error;
+      console.error("Attendance save error:", err);
+      setMessage(err.message || "Could not save attendance.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const presentCount = items.filter(
+    (child) => present[child.id] !== false
+  ).length;
+
+  const absentCount = items.length - presentCount;
+
+  return (
+    <main className="p-5 md:p-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-2xl font-black">Attendance</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Record attendance and identify children who may need follow-up.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="attendance-date"
+            className="mb-1 block text-sm font-semibold"
+          >
+            Attendance Date
+          </label>
+
+          <input
+            id="attendance-date"
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            className="rounded-xl border bg-white px-4 py-2 outline-none focus:ring-2 focus:ring-orange-300"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border bg-white p-5">
+          <p className="text-sm text-slate-500">Total Children</p>
+          <p className="mt-2 text-3xl font-black">{items.length}</p>
+        </div>
+
+        <div className="rounded-2xl border bg-white p-5">
+          <p className="text-sm text-slate-500">Present</p>
+          <p className="mt-2 text-3xl font-black">{presentCount}</p>
+        </div>
+
+        <div className="rounded-2xl border bg-white p-5">
+          <p className="text-sm text-slate-500">Absent</p>
+          <p className="mt-2 text-3xl font-black">{absentCount}</p>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-2xl border bg-white">
+        <div className="border-b p-5">
+          <h2 className="font-black">Children</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Children are marked present by default. Click a status to change it.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="p-8 text-center text-sm text-slate-500">
+            Loading attendance...
+          </div>
+        ) : items.length === 0 ? (
+          <div className="p-8 text-center text-sm text-slate-500">
+            No active children were found for this location.
+          </div>
+        ) : (
+          <div className="divide-y">
+            {items.map((child) => {
+              const isPresent = present[child.id] !== false;
+
+              return (
+                <div
+                  key={child.id}
+                  className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-bold">
+                      {child.first_name} {child.last_name}
+                    </p>
+
+                    <p className="text-sm text-slate-500">
+                     {child.classes?.[0]?.name || "No class assigned"}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleAttendance(child.id)}
+                    className={`rounded-xl px-4 py-2 text-sm font-bold ${
+                      isPresent
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {isPresent ? "Present" : "Absent"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center gap-4">
+        <button
+          type="button"
+          onClick={saveAttendance}
+          disabled={saving || loading || items.length === 0}
+          className="rounded-xl bg-orange-600 px-6 py-3 font-bold text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {saving ? "Saving Attendance..." : "Save Attendance"}
+        </button>
+
+        {message && (
+          <p className="text-sm font-medium text-slate-600">{message}</p>
+        )}
+      </div>
+    </main>
+  );
 }
