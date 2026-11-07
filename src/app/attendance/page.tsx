@@ -136,70 +136,28 @@ export default function Attendance() {
     setMessage("");
 
     try {
-      // Get the authenticated user so every attendance record
-      // identifies who marked it.
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError) {
-        throw userError;
-      }
-
-      if (!user) {
-        throw new Error("You must be signed in to save attendance.");
-      }
-
       const records = items.map((child) => ({
-        church_id: church,
         child_id: child.id,
-        session_date: date,
         present: present[child.id] ?? true,
-        marked_by: user.id,
       }));
 
-      /*
-       * Remove existing attendance for this church and date before
-       * inserting the updated records.
-       */
-      const { error: deleteError } = await supabase
-        .from("attendance")
-        .delete()
-        .eq("church_id", church)
-        .eq("session_date", date);
-
-      if (deleteError) {
-        throw deleteError;
-      }
-
-      // Save attendance records.
-      const { error: insertError } = await supabase
-        .from("attendance")
-        .insert(records);
-
-      if (insertError) {
-        throw insertError;
-      }
-
-      /*
-       * Evaluate children who may require follow-up after
-       * repeated absences.
-       */
-      const { data: followUpCount, error: followUpError } =
-        await supabase.rpc("evaluate_attendance_follow_up", {
+      // Save and evaluate in one database transaction. This also keeps the
+      // follow-up check aligned with the selected church and session date.
+      const { data: saveResult, error: saveError } = await supabase.rpc(
+        "save_attendance_session",
+        {
           p_church_id: church,
-        });
+          p_session_date: date,
+          p_records: records,
+        }
+      );
 
-      if (followUpError) {
-        console.error("Follow-up evaluation error:", followUpError);
-      }
+      if (saveError) throw saveError;
 
-      const presentCount = records.filter(
-        (record) => record.present
-      ).length;
+      const followUpCount = Number(saveResult?.follow_ups ?? 0);
 
-      const absentCount = records.length - presentCount;
+      const presentCount = Number(saveResult?.present ?? 0);
+      const absentCount = Number(saveResult?.absent ?? 0);
 
       let successMessage =
         `Attendance saved successfully. ` +
